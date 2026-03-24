@@ -1,11 +1,17 @@
 # 📋 Mod. FN – Foglio Notizie · Assunzione in Servizio
+![Version](https://img.shields.io/badge/Versione-4.0-orange)
+![License](https://img.shields.io/badge/Licenza-CC%20BY--NC--SA%204.0-blue)
+![HTML](https://img.shields.io/badge/HTML-Single%20File-red?logo=html5)
+![GitHub stars](https://img.shields.io/github/stars/sebastianobasile/presa-servizio)
+![GitHub forks](https://img.shields.io/github/forks/sebastianobasile/presa-servizio)
 
 **Generatore di moduli per la presa di servizio del personale scolastico**
 
-> Autore: **Sebastiano BASILE** · [superscuola.com](https://superscuola.com)  
+> Autore: **Sebastiano BASILE** Avola (SR) · [superscuola.com](https://superscuola.com)  
 > Licenza: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.it)  
 > Progetto: [GitHub – sebastianobasile](https://github.com/sebastianobasile?tab=repositories)
 
+Se ti piace questo strumento [![Contributo volontario](https://img.shields.io/badge/Offrimi_un_caffè_☕-PayPal-blue)](https://paypal.me/superscuola)
 ---
 
 ## 📌 Descrizione
