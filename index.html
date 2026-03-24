@@ -2,532 +2,1069 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Generatore Individuazione Personale Scolastico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foglio Notizie – Assunzione in Servizio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root { --font-size: 11.5pt; }
+        body { background-color: #3a3f47; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
 
-        body { background-color: #525659; margin: 0; padding: 0; }
-        .sidebar { background: #f0f8ff; height: 100vh; overflow-y: auto; padding: 15px; border-right: 2px solid #007bff; font-size: 0.85rem; }
-        .bg-azzurro { background-color: #007bff !important; color: white; padding: 5px 10px; margin-top: 10px; border-radius: 4px; }
-        .preview-area { height: 100vh; overflow-y: auto; padding: 10px; display: flex; justify-content: center; }
-
-        /* ---- Pannello collassabile Istituto ---- */
-        details.panel-istituto { margin-top: 0; }
-        details.panel-istituto > summary {
-            background-color: #1a5fa8;
+        /* SIDEBAR */
+        .sidebar {
+            background: #f8f9fa;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 12px;
+            border-right: 3px solid #1565c0;
+            font-size: 0.82rem;
+        }
+        .sidebar-title {
+            background: #1565c0;
             color: white;
             padding: 6px 10px;
-            border-radius: 4px;
+            margin: 10px -12px 8px -12px;
+            font-weight: bold;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-title:first-child { margin-top: -12px; }
+        .sidebar-title.verde { background: #2e7d32; }
+        .form-label { margin-bottom: 2px; font-size: 0.78rem; color: #333; }
+        .form-control-sm, .form-select-sm { font-size: 0.8rem; }
+        .form-check-label { font-size: 0.78rem; }
+
+        /* TABS PAGINE */
+        .page-tabs { border-bottom: 2px solid #1565c0; margin-bottom: 10px; }
+        .page-tab {
+            display: inline-block;
+            padding: 5px 14px;
             cursor: pointer;
-            list-style: none;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #555;
+            border-radius: 4px 4px 0 0;
+            border: 1px solid transparent;
+        }
+        .page-tab.active { background: #1565c0; color: white; border-color: #1565c0; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        /* PULSANTI AZIONE */
+        .btn-pdf { background: #1b5e20; color: white; border: none; width: 100%; padding: 8px; font-weight: bold; border-radius: 4px; margin-top: 6px; font-size: 0.85rem; }
+        .btn-pdf:hover { background: #2e7d32; color: white; }
+        .btn-json-save { background: #e65100; color: white; border: none; width: 100%; padding: 6px; font-weight: bold; border-radius: 4px; margin-top: 4px; font-size: 0.8rem; }
+        .btn-json-save:hover { background: #bf360c; color: white; }
+        .btn-json-load { background: #4a148c; color: white; border: none; width: 100%; padding: 6px; font-weight: bold; border-radius: 4px; margin-top: 4px; font-size: 0.8rem; }
+        .btn-json-load:hover { background: #6a1b9a; color: white; }
+        .btn-reset { background: transparent; color: #c62828; border: 1px solid #c62828; width: 100%; padding: 5px; border-radius: 4px; margin-top: 4px; font-size: 0.78rem; }
+        .btn-reset:hover { background: #c62828; color: white; }
+
+        /* PREVIEW */
+        .preview-area {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* FOGLIO A4 */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 12mm 18mm 22mm;
+            background: white;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 10.5pt;
+            color: black;
+            line-height: 1.55;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            text-align: justify;
+            hyphens: auto;
+        }
+        /* Tutte le pagine: altezza fissa A4, footer a fondo pagina */
+        #page1, #page2, #page3 {
+            height: 297mm;
+            min-height: unset;
+            overflow: hidden;
+        }
+        #page1 .footer-doc, #page2 .footer-doc, #page3 .footer-doc {
+            position: absolute;
+            bottom: 6mm;
+            left: 18mm;
+            right: 18mm;
+            margin-top: 0;
+            padding-top: 4px;
+        }
+
+        /* ELEMENTI DOCUMENTO */
+        .doc-header { text-align: center; margin-bottom: 6px; line-height: 1.25; }
+        .doc-intestazione { font-weight: bold; font-size: 11pt; }
+        .doc-sottotitolo { font-size: 9pt; text-align: center; }
+        .doc-titolo-principale {
+            text-align: center;
+            border-bottom: 2px solid black;
+            padding-bottom: 6px;
+            margin: 10px 0 8px 0;
+            line-height: 1.2;
+        }
+        .doc-titolo-principale .titolo { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+        .doc-titolo-principale .sottotitolo { font-size: 9.5pt; font-style: italic; }
+
+        .campo { font-weight: bold; }
+        .sezione-titolo {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 10px 0 4px 0;
+            font-size: 9.5pt;
+        }
+        .sezione-titolo-center {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 10px 0 4px 0;
+            font-size: 9.5pt;
+            text-align: center;
+        }
+        .riga { margin: 3px 0; }
+
+        .casella-check {
+            display: inline-block;
+            width: 12px; height: 12px;
+            border: 1.5px solid black;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 10px;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+        .casella-check.checked::after { content: "✓"; font-weight: bold; font-size: 11px; }
+
+        .tabella-famiglia { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9.5pt; }
+        .tabella-famiglia th { border: 1px solid black; padding: 3px 6px; text-align: center; font-weight: bold; background: #f5f5f5; }
+        .tabella-famiglia td { border: 1px solid black; padding: 3px 6px; }
+
+        .firma-block { text-align: left; margin-top: 16px; font-style: italic; font-size: 10pt; }
+        .firma-split {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
-            font-weight: bold;
-            user-select: none;
-        }
-        details.panel-istituto > summary::-webkit-details-marker { display: none; }
-        details.panel-istituto > summary .arrow {
-            font-size: 0.7rem;
-            transition: transform 0.2s;
-        }
-        details.panel-istituto[open] > summary .arrow { transform: rotate(180deg); }
-        details.panel-istituto > .panel-body {
-            border: 1px solid #1a5fa8;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            padding: 8px;
-            background: #eaf3ff;
-        }
-        .badge-saved {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            font-size: 0.68rem;
-            padding: 1px 6px;
-            border-radius: 10px;
-            margin-left: 6px;
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-        .badge-saved.show { opacity: 1; }
-
-        #doc-pdf {
-            width: 210mm; height: 296mm; padding: 10mm 18mm;
-            background: white; font-family: "Times New Roman", Times, serif;
-            font-size: var(--font-size); color: black; line-height: 1.6;
-            box-sizing: border-box; display: flex; flex-direction: column;
-        }
-
-        .header-scuola { text-align: center; font-weight: bold; margin-bottom: 2px; line-height: 1.2; }
-        .header-sub    { text-align: center; line-height: 1.2; }
-        .title-block { text-align: center; margin: 15px 0; border-bottom: 1.5px solid black; padding-bottom: 8px; line-height: 1.2; }
-
-        .dynamic-field { font-weight: bold; padding: 0 2px; }
-        .prot-line { border-bottom: 1px solid #000; min-width: 150px; display: inline-block; font-weight: bold; }
-
-        .red-text   { color: #d93025; font-weight: bold; }
-        .green-date { color: #28a745; font-weight: bold; }
-        .red-date   { color: #d93025; font-weight: bold; }
-
-        .ds-block { margin-top: 30px; text-align: center; align-self: flex-end; width: 350px; line-height: 1.3; }
-        .firma-line {
-            border-top: 1px solid #000;
-            margin-top: 28px;
-            padding-top: 4px;
-            font-size: 8pt;
+            margin-top: 8mm;
+            margin-bottom: 2mm;
             font-style: italic;
-            width: 220px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 10pt;
+            text-align: left;
         }
-        .firma-sostitutiva { font-size: 8pt; font-style: italic; margin-top: 6px; }
-
-        .legal-footer { margin-top: auto; font-size: 8pt; border-top: 1px solid #eee; padding-top: 8px; text-align: center; color: #444; line-height: 1.2; }
-        .dest-block { margin-top: 35px; margin-bottom: 45px; text-align: right; line-height: 1.4; }
-
-        .info-icon {
-            display: inline-block; width: 14px; height: 14px;
-            background-color: #007bff; color: white; border-radius: 50%;
-            text-align: center; line-height: 14px; font-size: 10px;
-            font-weight: bold; cursor: help; margin-left: 5px;
+        .firma-split .firma-destra {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8mm;
         }
+        /* Rimossa la linea sotto la firma */
+        .firma-split .firma-destra .linea {
+            display: none;
+        }
+        .sezione-titolo { text-align: left; }
+        .sezione-titolo-center { text-align: center; }
+
+        .dichiarazione-punto { margin: 4px 0; padding-left: 8px; font-size: 10pt; }
+        .dichiarazione-punto::before { content: "►"; margin-right: 4px; }
+
+        .footer-doc {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid #ccc;
+            font-size: 7.5pt;
+            text-align: center;
+            color: #555;
+        }
+
+        .page-label { color: #aaa; font-size: 0.72rem; text-align: center; font-family: sans-serif; margin-top: -8px; margin-bottom: 4px; }
+        .badge-pagina { background: #1565c0; color: white; font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-family: sans-serif; display: inline-block; margin-bottom: 6px; }
 
         @media print {
-            .sidebar, .preview-area { height: auto; overflow: visible; }
+            body { background: white; margin: 0; padding: 0; }
+            .sidebar { display: none !important; }
+            .preview-area {
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                gap: 0 !important;
+                display: block !important;
+            }
+            .page-label, .badge-pagina { display: none !important; }
+            .a4-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                page-break-after: always;
+                break-after: page;
+                width: 210mm !important;
+                min-height: unset !important;
+                height: 297mm !important;
+                padding: 12mm 18mm 22mm !important;
+            }
+            #page1, #page2, #page3 {
+                height: 297mm !important;
+                overflow: hidden !important;
+            }
+            .col-md-8, .col-lg-9 {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+            .container-fluid, .row { display: block !important; }
+        }
+
+        #save-indicator { font-size: 0.7rem; color: #2e7d32; text-align: center; padding: 2px; height: 18px; transition: opacity 0.5s; }
+
+        /* Details intestazione */
+        #details-intestazione > summary { padding: 6px 10px; margin: 0 -12px 0 -12px; }
+        #details-intestazione[open] .toggle-icon { transform: rotate(0deg); }
+        #details-intestazione:not([open]) .toggle-icon { transform: rotate(180deg); }
+        #details-intestazione > summary::-webkit-details-marker { display: none; }
+        #details-intestazione > summary::marker { display: none; }
+
+        /* Editor autocertificazione */
+        .autocerti-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 3px;
+        }
+        .autocerti-toolbar .btn-bold-ac {
+            background: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 9px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1.5;
+        }
+        .autocerti-toolbar .btn-bold-ac:hover { background: #0d47a1; }
+        .autocerti-toolbar .hint {
+            font-size: 0.68rem;
+            color: #888;
+            line-height: 1.2;
+        }
+        #in_autocerti_editor {
+            min-height: 130px;
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 0.8rem;
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.5;
+            background: white;
+            outline: none;
+            cursor: text;
+            color: #212529;
+            word-break: break-word;
+        }
+        #in_autocerti_editor:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+        }
+        #in_autocerti_editor:empty::before {
+            content: attr(data-placeholder);
+            color: #aaa;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-4 sidebar">
+<div class="row g-0">
 
-            <!-- =====================================================
-                 1. IMPOSTAZIONI ISTITUTO (pannello a scomparsa)
-                 Compilare una sola volta: si chiude automaticamente
-                 ===================================================== -->
-            <details class="panel-istituto" id="panel_istituto">
-                <summary>
-                    ⚙ IMPOSTAZIONI ISTITUTO
-                    <span class="badge-saved" id="badge_saved">✓ salvato</span>
-                    <span class="arrow">▼</span>
-                </summary>
-                <div class="panel-body">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <label class="form-label mb-0">Nome Istituto <small class="text-muted">(riga 1 — grassetto)</small></label>
-                            <input type="text" id="in_scuola_r1" class="form-control form-control-sm"
-                                   value="3° ISTITUTO COMPRENSIVO CAPUANA-DE AMICIS DI AVOLA"
-                                   oninput="syncIstituto()">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label mb-0">Sottotitolo / Indirizzo <small class="text-muted">(riga 2)</small></label>
-                            <input type="text" id="in_scuola_r2" class="form-control form-control-sm"
-                                   value="Scuola dell'Infanzia - Scuola Primaria - Scuola Secondaria di primo grado ad indirizzo musicale"
-                                   oninput="syncIstituto()">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label mb-0">Riga 3 <small class="text-muted">(opzionale)</small></label>
-                            <input type="text" id="in_scuola_r3" class="form-control form-control-sm"
-                                   value="Viale C. Santuccio - 96012 Avola (SR) Tel. 0931.318330 - www.3iccapuana.edu.it"
-                                   oninput="syncIstituto()">
-                        </div>
-                        <div class="col-5">
-                            <!-- 2. Luogo per la data dinamico -->
-                            <label class="form-label mb-0">Luogo data</label>
-                            <input type="text" id="in_luogo" class="form-control form-control-sm"
-                                   value="Avola" oninput="syncIstituto()">
-                        </div>
-                        <div class="col-7">
-                            <!-- 3. Nome Dirigente Scolastico dinamico -->
-                            <label class="form-label mb-0">Nome Dirigente Scolastico</label>
-                            <input type="text" id="in_ds_nome" class="form-control form-control-sm"
-                                   value="Prof. Giuseppe CANINO" oninput="syncIstituto()">
-                        </div>
-                        <div class="col-12">
-                            <!-- 4. Tipo firma DS -->
-                            <label class="form-label mb-0">Tipo di firma DS
-                                <span class="info-icon" title="Autografa e Digitale: stampano una linea per firmare a mano. Sostitutiva: aggiunge la dicitura legale 'ai sensi art. 3 comma 2 D.lgs. n. 39/93'.">?</span>
-                            </label>
-                            <select id="in_firma_tipo" class="form-select form-select-sm" onchange="syncIstituto()">
-                                <option value="sostitutiva">Sostitutiva a mezzo stampa (art. 3 c.2 D.lgs. 39/93)</option>
-                                <option value="autografa">Autografa (linea per firma a penna)</option>
-                                <option value="digitale">Digitale (linea per firma a penna)</option>
-                            </select>
-                        </div>
-                        <div class="col-12 text-end">
-                            <small class="text-muted">Le impostazioni si salvano automaticamente nel browser.</small>
-                        </div>
-                    </div>
-                </div>
-            </details>
-            <!-- fine pannello istituto -->
+<!-- SIDEBAR -->
+<div class="col-md-4 col-lg-3 sidebar">
 
-            <div class="bg-azzurro small fw-bold">DATI GENERALI E PROTOCOLLI</div>
-            <div class="row g-2 p-2">
-                <div class="col-6">
-                    <label>Data Generale
-                        <span class="info-icon" title="Inserendo questa data, verrà applicata automaticamente anche alla Data di Convocazione e alla Data di Assunzione, a meno che non decidi di personalizzarle singolarmente scegliendo date diverse dai rispettivi calendari.">?</span>
-                    </label>
-                    <input type="date" id="in_data_doc" class="form-control form-control-sm" oninput="sync()">
-                </div>
-                <div class="col-6"><label>Protocollo Generale</label><input type="text" id="in_prot_gen" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-6"><label>Protocollo Convocazione</label><input type="text" id="in_prot_conv" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-6"><label>Data Convocazione</label><input type="date" id="in_data_conv" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-6"><label>Protocollo Assunzione</label><input type="text" id="in_prot_acc" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-6"><label>Data Assunzione</label><input type="date" id="in_data_acc" class="form-control form-control-sm" oninput="sync()"></div>
+    <div class="sidebar-title" style="margin-top:-12px;">📋 FOGLIO NOTIZIE – ASSUNZIONE IN SERVIZIO</div>
+
+    <!-- INTESTAZIONE (a scomparsa, aperta di default) -->
+    <details id="details-intestazione" open style="margin-bottom:6px;">
+        <summary class="sidebar-title verde" style="cursor:pointer; list-style:none; user-select:none; display:flex; justify-content:space-between; align-items:center; margin-top:0; margin-bottom:0;">
+            <span>🏫 INTESTAZIONE ISTITUTO</span>
+            <span class="toggle-icon" style="font-size:0.9rem; margin-right:4px;">▲</span>
+        </summary>
+        <div class="row g-1 mb-2" style="margin-top:6px;">
+            <div class="col-12">
+                <label class="form-label">Titolo istituto (riga 1)</label>
+                <input type="text" id="in_nome_scuola" class="form-control form-control-sm" oninput="sync()">
             </div>
-
-            <div class="bg-azzurro small fw-bold">ANAGRAFICA PERSONALE</div>
-            <div class="row g-2 p-2">
-                <div class="col-4">
-                    <label>Sesso</label>
-                    <select id="in_sesso" class="form-select form-select-sm" onchange="sync()">
-                        <option value="M">Uomo</option>
-                        <option value="F" selected>Donna</option>
-                    </select>
-                </div>
-                <div class="col-8"><label>Cognome e Nome</label><input type="text" id="in_nome" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-12"><label>Data Nascita</label><input type="date" id="in_nascita" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12">
+                <label class="form-label">Sottotitolo / Indirizzo (riga 2)</label>
+                <input type="text" id="in_sottotitolo_scuola" class="form-control form-control-sm" oninput="sync()">
             </div>
-
-            <div class="bg-azzurro small fw-bold">DETTAGLI INCARICO</div>
-            <div class="row g-2 p-2">
-                <div class="col-12"><label>Tipologia</label>
-                    <select id="in_tipo_pers" class="form-select form-select-sm" onchange="sync()">
-                       <option value="Seleziona">Seleziona...</option>
-                        <option value="Personale Docente">Personale Docente</option>
-                        <option value="Personale ATA (Assistente Amministrativo)">Personale ATA (Assistente Amministrativo)</option>
-                        <option value="Personale ATA (Collaboratore Scolastico)">Personale ATA (Collaboratore Scolastico)</option>
-                    </select>
-                </div>
-                <div class="col-12"><label>Ordine di Scuola (Solo per Docenti)</label>
-                    <select id="in_ordine" class="form-select form-select-sm" onchange="sync()">
-                        <option value="Seleziona">Seleziona...</option>
-                        <option value="Scuola dell'Infanzia">Scuola dell'Infanzia</option>
-                        <option value="Scuola Primaria">Scuola Primaria</option>
-                        <option value="Scuola Secondaria">Scuola Secondaria</option>
-                    </select>
-                </div>
-                <div class="col-12"><label>Classe / Posto / Profilo</label><input type="text" id="in_classe" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12">
+                <label class="form-label">Anno Scolastico (A.S.)</label>
+                <input type="text" id="in_anno_scolastico" class="form-control form-control-sm" placeholder="es. 2025/2026" oninput="sync()">
             </div>
-
-            <div class="bg-azzurro small fw-bold">GRADUATORIA E DATE</div>
-            <div class="row g-2 p-2">
-                <div class="col-12"><label>Fascia</label>
-                    <select id="in_grad" class="form-select form-select-sm" onchange="toggleAltroFascia(); sync()">
-                        <option value="Seleziona">Seleziona...</option>
-                        <option value="1ª fascia d'Istituto">1ª fascia d'Istituto</option>
-                        <option value="2ª fascia d'Istituto">2ª fascia d'Istituto</option>
-                        <option value="3ª fascia d'Istituto">3ª fascia d'Istituto</option>
-                        <option value="Interpello">Interpello</option>
-                        <option value="__altro__">Altro (personalizza)…</option>
-                    </select>
-                </div>
-                <div class="col-12" id="wrap_grad_altro" style="display:none;">
-                    <input type="text" id="in_grad_altro" class="form-control form-control-sm"
-                           placeholder="Scrivi la fascia / tipo graduatoria…" oninput="sync()">
-                </div>
-                <div class="col-5"><label>Pos. in graduatoria</label><input type="text" id="in_pos" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-3"><label>Punti</label><input type="text" id="in_punti" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-4"><label>Ore settimanali</label><input type="text" id="in_ore" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-6"><label>Inizio supplenza</label><input type="date" id="in_inizio" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-6"><label>Fine supplenza</label><input type="date" id="in_fine" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-12"><label>ASS. Amm. responsabile della gestione della pratica:</label><input type="text" id="in_resp" class="form-control form-control-sm" oninput="sync()"></div>
-                <div class="col-12"><label>Altre Note</label><textarea id="in_note" class="form-control form-control-sm" rows="2" oninput="sync()"></textarea></div>
+            <div class="col-12" style="margin-top:4px; padding-top:6px; border-top:1px solid #ddd;">
+                <label class="form-label" style="font-weight:bold; color:#1565c0;">📅 Luogo e Data (tutti i documenti)</label>
             </div>
-
-            <button class="btn btn-success w-100 my-2 fw-bold" onclick="exportPDF()">SCARICA PDF (A4)</button>
-            <button class="btn btn-outline-danger btn-sm w-100" onclick="resetForm()">PULISCI CAMPI PERSONALE</button>
-            <div style="margin-top:14px; font-size:0.72rem; color:#6c757d; text-align:center; line-height:1.6;">
-                Mod. IPS - v. 5.0 – Autore: Seb.no BASILE - superscuola.com<br>
-                <a href="https://github.com/sebastianobasile?tab=repositories" target="_blank" style="color:#6c757d;">Progetto su GitHub</a>
-                &nbsp;·&nbsp;
-                <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.it" target="_blank" style="color:#6c757d;">CC BY-NC-SA 4.0</a>
+            <div class="col-6">
+                <label class="form-label">Luogo firma</label>
+                <input type="text" id="in_luogo_firma" class="form-control form-control-sm" placeholder="es. Avola" oninput="sync()">
+            </div>
+            <div class="col-6">
+                <label class="form-label">Data firma</label>
+                <input type="date" id="in_data_firma" class="form-control form-control-sm" oninput="sync()">
             </div>
         </div>
+    </details>
 
-        <!-- ======================== DOCUMENTO PDF ======================== -->
-        <div class="col-md-8 preview-area">
-            <div id="doc-pdf">
+    <!-- TABS -->
+    <div class="page-tabs">
+        <span class="page-tab active" onclick="showSection('s1',this)">1·Notizie</span>
+        <span class="page-tab" onclick="showSection('s2',this)">2·Espero</span>
+        <span class="page-tab" onclick="showSection('s3',this)">3·Dichiar.</span>
+    </div>
 
-                <!-- Intestazione istituto (3 righe dinamiche) -->
-                <div class="header-scuola" id="cfg_scuola_r1"></div>
-                <div class="header-sub"    id="cfg_scuola_r2"></div>
-                <div class="header-sub"    id="cfg_scuola_r3" style="display:none;"></div>
-
-                <div class="title-block">
-                    <div style="font-size: 17pt; font-weight: bold;">INDIVIDUAZIONE PERSONALE SCOLASTICO</div>
-                    <div style="font-size: 11pt; font-style: italic;">per contratto a tempo determinato da graduatoria d'istituto</div>
-                </div>
-
-                <div class="d-flex justify-content-between mt-1">
-                    <div>Prot. n. <span class="prot-line" id="out_prot_gen"></span></div>
-                    <!-- 2. Luogo dinamico -->
-                    <div><span id="out_luogo">Avola</span>, <span class="dynamic-field" id="out_data_top"></span></div>
-                </div>
-
-                <div class="dest-block">
-                    <span id="out_appello">Alla Sig.ra</span> <span class="red-text" id="out_nome_top"></span><br>
-                    <span style="font-size: 10pt;">All'albo Amministrazione Trasparente</span>
-                </div>
-
-                <div class="text-center fw-bold">IL DIRIGENTE SCOLASTICO</div>
-
-                <div class="mt-3">
-                    <p style="margin-bottom: 8px;">
-                        ► Viste le graduatorie di Istituto per le supplenze del <span class="dynamic-field" id="out_tipo_pers_v"></span><br>
-                        ► Viste le procedure di convocazione supplenze Prot. n. <span class="dynamic-field" id="out_prot_conv"></span> del <span class="dynamic-field" id="out_data_conv"></span><br>
-                        ► Preso atto delle accettazioni e rinunce pervenute nei termini della procedura.<br>
-                        ► Vista l'accettazione <span id="out_del_sig">della sig.ra</span> <span class="red-text" id="out_nome_acc"></span> Prot. n. <span class="dynamic-field" id="out_prot_acc"></span> del <span class="dynamic-field" id="out_data_acc"></span>
-                    </p>
-                </div>
-
-                <div class="text-center fw-bold my-2">INDIVIDUA</div>
-
-                <p style="text-align: justify; margin-bottom: 15px;">
-                    <span id="out_art_il">La</span> <span id="out_sigra_main">sig.ra</span> <span class="red-text" id="out_nome_main"></span>
-                    <span id="out_nato_a">nata</span> il <span class="dynamic-field" id="out_nascita"></span> <span id="out_inserita_a">inserita</span> al posto <span class="dynamic-field" id="out_pos"></span>
-                    con punti <span class="dynamic-field" id="out_punti"></span> nella graduatoria di <span class="dynamic-field" id="out_grad"></span>,
-                    quale <span id="out_destinatario">destinataria</span> del contratto per una supplenza di num. <span class="dynamic-field" id="out_ore"></span>
-                    ore settimanali <span id="out_label_qualita">per l'ordine di</span> <b id="out_qualifica_ordine"></b> - <span class="dynamic-field" id="out_classe"></span>.
-                </p>
-
-                <p>
-                    DATA DI <b>INIZIO</b> SUPPLENZA ► <span class="green-date" id="out_inizio"></span><br>
-                    DATA DI <b>FINE</b> SUPPLENZA ► <span class="red-date" id="out_fine"></span>
-                </p>
-
-                <div style="border: 1px solid #ffc107; padding: 10px; margin-top: 10px; font-size: 10pt;">
-                    <b>NOTE ►</b> <span id="out_giorni"></span> <span id="out_note"></span>
-                    <div class="text-end mt-1" style="font-size: 8.5pt;">Ass. Amm.: <span id="out_resp"></span></div>
-                </div>
-
-                <!-- 3+4. Blocco DS: nome dinamico + firma condizionale -->
-                <div class="ds-block">
-                    <div class="fw-bold">IL DIRIGENTE SCOLASTICO</div>
-                    <div id="cfg_ds_nome"></div>
-                    <!-- contenuto cambia in base al tipo firma -->
-                    <div id="cfg_ds_firma_block"></div>
-                </div>
-
-                <div class="legal-footer">
-                    <b>Il presente è stralcio conforme all'originale del contratto agli atti di questo Istituto – v5 · Mod. IPS · S.B.</b>
-                </div>
+    <!-- SEZIONE 1 -->
+    <div id="s1" class="page-section active">
+        <div class="sidebar-title">DATI ANAGRAFICI</div>
+        <div class="row g-1">
+            <div class="col-6"><label class="form-label">Cognome</label><input type="text" id="in_cognome" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-6"><label class="form-label">Nome</label><input type="text" id="in_nome" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12">
+                <label class="form-label">Genere del dichiarante</label>
+                <select id="in_genere" class="form-select form-select-sm" onchange="sync()">
+                    <option value="M">Maschile – il sottoscritto / nato il</option>
+                    <option value="F">Femminile – la sottoscritta / nata il</option>
+                </select>
             </div>
+            <div class="col-6"><label class="form-label">Data di Nascita</label><input type="date" id="in_nascita" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-6"><label class="form-label">Luogo Nascita</label><input type="text" id="in_luogo_nascita" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-4"><label class="form-label">Prov.</label><input type="text" id="in_prov_nascita" class="form-control form-control-sm" maxlength="2" oninput="sync()"></div>
+            <div class="col-8"><label class="form-label">Indirizzo residenza</label><input type="text" id="in_indirizzo" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-7"><label class="form-label">Città residenza</label><input type="text" id="in_citta_res" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-2"><label class="form-label">Prov.</label><input type="text" id="in_prov_res" class="form-control form-control-sm" maxlength="2" oninput="sync()"></div>
+            <div class="col-12"><label class="form-label">Tel. / Email</label><input type="text" id="in_contatti" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-7"><label class="form-label">Codice Fiscale</label><input type="text" id="in_cf" class="form-control form-control-sm" style="text-transform:uppercase" oninput="sync()"></div>
+            <div class="col-5"><label class="form-label">N. Partita (opz.)</label><input type="text" id="in_partita" class="form-control form-control-sm" oninput="sync()"></div>
+        </div>
+
+        <div class="sidebar-title">ALLEGATI (riquadro pag.1)</div>
+        <div class="row g-1">
+            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="in_all_cedolino" onchange="sync()"><label class="form-check-label" for="in_all_cedolino">Cedolino dello stipendio</label></div></div>
+            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="in_all_documento" onchange="sync()"><label class="form-check-label" for="in_all_documento">Documento di riconoscimento valido</label></div></div>
+            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="in_all_cf" onchange="sync()"><label class="form-check-label" for="in_all_cf">Codice Fiscale</label></div></div>
+            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="in_all_possesso" onchange="sync()"><label class="form-check-label" for="in_all_possesso">Documenti già in possesso dell'Istituto</label></div></div>
+        </div>
+
+        <div class="sidebar-title">INCARICO</div>
+        <div class="row g-1">
+            <div class="col-12">
+                <label class="form-label">Tipo di assunzione</label>
+                <select id="in_tipo_dich" class="form-select form-select-sm" onchange="toggleAltro('in_tipo_dich','in_tipo_dich_altro');sync()">
+                    <option value="SUPPLENZA_LUNGA">Supplenza Lunga</option>
+                    <option value="PASS_RUOLO">Passaggio di Ruolo</option>
+                    <option value="TRASFERIMENTO">Trasferimento</option>
+                    <option value="ASS_PROVVISORIA">Assegnazione Provvisoria</option>
+                    <option value="UTILIZZAZIONE">Utilizzazione</option>
+                    <option value="ALTRO">Altro (personalizza...)</option>
+                </select>
+                <input type="text" id="in_tipo_dich_altro" class="form-control form-control-sm mt-1" placeholder="Scrivi la dicitura..." style="display:none" oninput="sync()">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Qualifica</label>
+                <select id="in_qualifica" class="form-select form-select-sm" onchange="toggleAltro('in_qualifica','in_qualifica_altro');sync()">
+                    <option value="Docente a tempo Determinato">Docente a Tempo Determinato</option>
+                    <option value="Docente a tempo Indeterminato">Docente a Tempo Indeterminato</option>
+                    <option value="Personale ATA">Personale ATA</option>
+                    <option value="ALTRO">Altro (personalizza...)</option>
+                </select>
+                <input type="text" id="in_qualifica_altro" class="form-control form-control-sm mt-1" placeholder="Scrivi la qualifica..." style="display:none" oninput="sync()">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Ordine di Scuola</label>
+                <select id="in_ordine" class="form-select form-select-sm" onchange="sync()">
+                    <option value="Secondaria di 1° Grado">Secondaria di 1° Grado</option>
+                    <option value="Primaria">Primaria</option>
+                    <option value="Infanzia">Infanzia</option>
+                    <option value="Secondaria di 2° Grado">Secondaria di 2° Grado</option>
+                </select>
+            </div>
+            <div class="col-5"><label class="form-label">Data assunzione</label><input type="date" id="in_data_assunzione" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-4"><label class="form-label">Ore settimanali</label><input type="number" id="in_ore" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-3"><label class="form-label">Fino al</label><input type="date" id="in_fine" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12"><label class="form-label">Classe di concorso / Disciplina</label><input type="text" id="in_classe" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-8"><label class="form-label">Completa in altra scuola per ore</label><input type="text" id="in_ore_extra" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12"><label class="form-label">Sede ore completamento</label><input type="text" id="in_sede_extra" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12"><label class="form-label">Titolo di studio principale</label><input type="text" id="in_titolo_studio" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-6"><label class="form-label">Data immissione in ruolo</label><input type="date" id="in_data_ruolo" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-6"><label class="form-label">Sede di titolarità</label><input type="text" id="in_sede_titolarita" class="form-control form-control-sm" oninput="sync()"></div>
+            <div class="col-12"><label class="form-label">Ultima sede di servizio</label><input type="text" id="in_ultima_sede" class="form-control form-control-sm" oninput="sync()"></div>
+        </div>
+
+        <div class="sidebar-title">STATO CIVILE E FAMIGLIA</div>
+        <div class="row g-1">
+            <div class="col-6">
+                <label class="form-label">Stato Civile</label>
+                <select id="in_stato_civile" class="form-select form-select-sm" onchange="sync()">
+                    <option value="Celibe">Celibe</option>
+                    <option value="Nubile">Nubile</option>
+                    <option value="Coniugato">Coniugato</option>
+                    <option value="Coniugata">Coniugata</option>
+                    <option value="Divorziato">Divorziato</option>
+                    <option value="Divorziata">Divorziata</option>
+                    <option value="Vedovo">Vedovo</option>
+                    <option value="Vedova">Vedova</option>
+                </select>
+            </div>
+            <div class="col-6"><label class="form-label">Comune di cittadinanza</label><input type="text" id="in_comune_citt" class="form-control form-control-sm" oninput="sync()"></div>
+        </div>
+
+        <div class="sidebar-title">COMPONENTI NUCLEO FAMILIARE</div>
+        <div id="famiglia-inputs"></div>
+        <button class="btn btn-sm btn-outline-primary w-100 mt-1" onclick="addFamilyMember()">+ Aggiungi componente</button>
+    </div>
+
+    <!-- SEZIONE 2 -->
+    <div id="s2" class="page-section">
+        <div class="sidebar-title">FONDO ESPERO</div>
+        <div class="row g-1">
+            <div class="col-12">
+                <label class="form-label">Posizione Fondo Espero</label>
+                <select id="in_espero" class="form-select form-select-sm" onchange="sync()">
+                    <option value="NON_ISCRITTO">Non iscritto</option>
+                    <option value="ISCRITTO">Già iscritto</option>
+                    <option value="RISCATTO">Ha optato per il riscatto</option>
+                </select>
+            </div>
+        </div>
+        <div class="sidebar-title">INCOMPATIBILITÀ</div>
+        <div class="row g-1">
+            <div class="col-12">
+                <label class="form-label">Situazione incompatibilità</label>
+                <select id="in_incompat" class="form-select form-select-sm" onchange="sync()">
+                    <option value="NESSUNA">Nessuna incompatibilità</option>
+                    <option value="OPTA">Incompatibilità - opta per nuovo rapporto</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEZIONE 3 -->
+    <div id="s3" class="page-section">
+        <div class="sidebar-title">AUTOCERTIFICAZIONE – TESTO LIBERO</div>
+        <div class="row g-1">
+            <div class="col-12">
+                <label class="form-label">Testo della dichiarazione</label>
+                <div class="autocerti-toolbar">
+                    <button type="button" class="btn-bold-ac" onclick="toggleBoldAutocerti()" title="Grassetto – oppure Ctrl+B"><b>G</b></button>
+                    <span class="hint">X Grassetto, seleziona e premi il tasto <b>G</b> o <kbd>Ctrl+B</kbd></span>
+                </div>
+                <div id="in_autocerti_editor"
+                     contenteditable="true"
+                     data-placeholder="Scrivi qui i titoli e le dichiarazioni..."></div>
+                <textarea id="in_autocerti" style="display:none"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- AZIONI GLOBALI -->
+    <div style="margin-top: 14px;">
+        <button class="btn-pdf" onclick="stampaPDF()">&#128438; STAMPA / SALVA PDF</button>
+        <button class="btn-json-save" onclick="saveJSON()">&#128190; ESPORTA DATI (.json)</button>
+        <label class="btn-json-load" style="cursor:pointer; text-align:center; display:block;">
+            &#128194; IMPORTA DATI (.json)
+            <input type="file" id="json-file-input" accept=".json" style="display:none" onchange="loadJSON(event)">
+        </label>
+        <button class="btn-reset" onclick="resetForm()">&#128465; Pulisci tutti i campi</button>
+        <div id="save-indicator"></div>
+        <div style="margin-top:10px; font-size:0.68rem; color:#888; text-align:center; line-height:1.6;">
+            Mod. FN &ndash; Autore: Seb.no BASILE &middot; superscuola.com<br>
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.it" target="_blank" style="color:#888;">CC BY-NC-SA 4.0</a>
+            &nbsp;&middot;&nbsp;
+            <a href="https://github.com/sebastianobasile?tab=repositories" target="_blank" style="color:#888; white-space:nowrap;">&#128279; GitHub</a>
         </div>
     </div>
 </div>
 
+<!-- ANTEPRIMA -->
+<div class="col-md-8 col-lg-9 preview-area">
+
+    <!-- PAGINA 1 -->
+    <div>
+        <div class="page-label"><span class="badge-pagina">Pagina 1 &ndash; Assunzione in Servizio e Foglio Notizie</span></div>
+        <div class="a4-page" id="page1">
+            <div class="doc-header">
+                <div class="doc-intestazione" id="out_nome_scuola"></div>
+                <div class="doc-sottotitolo" id="out_sottotitolo_scuola"></div>
+            </div>
+            <div class="doc-titolo-principale">
+                <div class="titolo">ASSUNZIONE IN SERVIZIO E FOGLIO NOTIZIE</div>
+                <div class="sottotitolo">Al Dirigente Scolastico</div>
+                <div class="sottotitolo">DICHIARAZIONE SOSTITUTIVA DI CERTIFICAZIONE (art. 46 DPR 445 del 2.12.2000)
+                    &nbsp;&nbsp; A. S. <span id="out_as"></span>
+                </div>
+            </div>
+
+            <div class="riga">
+                <span id="out_sottoscritto_p1">Il sottoscritto</span> <span class="campo" id="out_cognome"></span> <span class="campo" id="out_nome_p1"></span>,
+                <span id="out_nato_p1">nato</span> il <span class="campo" id="out_nascita"></span>
+                a <span class="campo" id="out_luogo_nascita"></span> (prov.&nbsp;<span class="campo" id="out_prov_nascita"></span>) e
+                residente in <span class="campo" id="out_indirizzo"></span>.<br>
+                Contatti e Info: <span class="campo" id="out_contatti"></span>
+                &nbsp;|&nbsp;Cod. Fiscale <span class="campo" id="out_cf"></span> &nbsp;|&nbsp; Numero di Partita: <span class="campo" id="out_partita"></span>
+            </div>
+
+            <!-- RIQUADRO ALLEGATI -->
+            <div style="border:1px solid #aaa; padding:6px; margin:8px 0; font-size:9.5pt;">
+                Al fine di evitare errori di trascrizione o lettura, si allega alla presente una copia del:<br>
+                <span class="casella-check" id="chk_all_cedolino"></span> <span id="txt_all_cedolino">Cedolino dello stipendio</span> &nbsp;&nbsp;
+                <span class="casella-check" id="chk_all_documento"></span> <span id="txt_all_documento">Documento di riconoscimento in corso di validità</span> &nbsp;&nbsp;
+                <span class="casella-check" id="chk_all_cf"></span> <span id="txt_all_cf">Codice Fiscale</span><br>
+                <span class="casella-check" id="chk_all_possesso"></span> <span id="txt_all_possesso">Dichiaro che i documenti, ancora validi, sono in possesso di questo Istituto per un precedente rapporto lavorativo.</span>
+            </div>
+
+            <div style="font-size:9.5pt; margin-bottom:6px;">
+                Consapevole che in caso di falsa dichiarazione verranno applicate le sanzioni previste dal codice penale e che la falsa dichiarazione comporta la decadenza dal beneficio ottenuto sulla base della dichiarazione non veritiera,
+            </div>
+
+            <!-- DICHIARA PER – riga centrata indipendente -->
+            <div style="text-align:center; font-weight:bold; font-size:9.5pt; text-transform:uppercase; margin:6px 0 1px 0;">Dichiara per</div>
+            <div style="text-align:center; font-size:10pt; margin-bottom:6px;">
+                <strong id="out_tipo_dich_label" style="text-transform:uppercase; letter-spacing:0.5px;"></strong>
+            </div>
+
+            <div class="riga mt-1">
+                di assumere servizio, presso questo istituto, in qualit&agrave; di <span class="campo" id="out_qualifica"></span>
+                nella scuola <span class="campo" id="out_ordine"></span>, a decorrere dal <span class="campo" id="out_data_assunzione"></span>, per n.&nbsp;<span class="campo" id="out_ore"></span> ore settimanali fino al <span class="campo" id="out_fine"></span>, per la classe di concorso/disciplina <span class="campo" id="out_classe"></span>,
+                con completamento di n.&nbsp;<span class="campo" id="out_ore_extra"></span> ore aggiuntive presso <span class="campo" id="out_sede_extra"></span>;
+                di essere in possesso del seguente titolo di studio principale: <span class="campo" id="out_titolo_studio"></span>;
+                data di immissione in ruolo: <span class="campo" id="out_data_ruolo"></span> - sede di titolarit&agrave;: <span class="campo" id="out_sede_titolarita"></span> - ultima sede di servizio: <span class="campo" id="out_ultima_sede"></span>
+            </div>
+
+            <!-- DICHIARA INOLTRE centrato -->
+            <div class="sezione-titolo-center">DICHIARA INOLTRE</div>
+
+            <div class="dichiarazione-punto">di essere cittadino italiano secondo le risultanze del Comune di <span class="campo" id="out_comune_citt"></span></div>
+            <div class="dichiarazione-punto">di godere dei diritti politici e di trovarsi nello Stato Civile attuale: <span class="campo" id="out_stato_civile"></span></div>
+            <div class="dichiarazione-punto">che la famiglia anagrafica convivente nello stesso nucleo &egrave; composta da: (con esclusione del dichiarante)</div>
+
+            <table class="tabella-famiglia">
+                <thead>
+                    <tr>
+                        <th style="width:6%">n.</th>
+                        <th style="width:20%">COGNOME</th>
+                        <th style="width:18%">NOME</th>
+                        <th style="width:30%">LUOGO, DATA DI NASCITA</th>
+                        <th style="width:26%">RAPP. DI PARENTELA</th>
+                    </tr>
+                </thead>
+                <tbody id="out_famiglia_body">
+                    <!-- le righe verranno generate dinamicamente -->
+                </tbody>
+            </table>
+
+            <div class="dichiarazione-punto">di non aver riportato condanne penali e di non essere destinatario di provvedimenti che riguardano l'applicazione di misure di prevenzione, di decisioni civili e di provvedimenti amministrativi iscritti nel casellario giudiziale ai sensi della vigente normativa.</div>
+            <div class="dichiarazione-punto">di non essere a conoscenza di essere sottoposto a procedimenti penali.</div>
+            <div class="riga" style="margin-top:6px; font-size:9.5pt;">Il sottoscritto si impegna a comunicare tempestivamente ogni variazione dei dati dichiarati.</div>
+
+            <div class="firma-split" style="margin-top:16px;">
+                <div style="font-style:italic;">
+                    <span id="out_luogo_firma1"></span>, <span id="out_data_firma1"></span>
+                </div>
+                <div class="firma-destra">
+                    <em>Firma del dichiarante</em>
+                    <!-- linea rimossa -->
+                </div>
+            </div>
+
+            <div class="footer-doc" id="footer_p1"></div>
+        </div>
+    </div>
+
+    <!-- PAGINA 2 -->
+    <div>
+        <div class="page-label"><span class="badge-pagina">Pagina 2 &ndash; Fondo Espero e Incompatibilit&agrave;</span></div>
+        <div class="a4-page" id="page2">
+            <div class="doc-titolo-principale" style="margin-top:0;">
+                <div class="titolo" style="font-size:13pt;">DICHIARAZIONE ISCRIZIONE FONDO ESPERO E INCOMPATIBILIT&Agrave;</div>
+            </div>
+
+            <div class="riga mt-3">
+                <span id="out_sottoscritto_p2">Il sottoscritto</span> <span class="campo" id="out_cognome_nome_p2"></span>
+            </div>
+            <div class="riga" style="font-size:9.5pt; margin:6px 0;">
+                in relazione alla forma di previdenza complementare riservata al personale del comparto scuola, istituita con accordo tra ARAN e le organizzazioni sindacali della scuola del 14 marzo 2001,
+            </div>
+
+            <div class="sezione-titolo-center">DICHIARA</div>
+
+            <div class="riga"><span class="casella-check" id="chk_espero_iscritto"></span><span id="txt_espero_iscritto"> di essere gi&agrave; iscritto al Fondo Scuola Espero</span></div>
+            <div class="riga"><span class="casella-check" id="chk_espero_riscatto"></span><span id="txt_espero_riscatto"> di aver optato per il riscatto della posizione maturata</span></div>
+            <div class="riga"><span class="casella-check" id="chk_espero_no"></span><span id="txt_espero_no"> di NON essere iscritto al Fondo Scuola Espero</span></div>
+
+            <div style="font-size:9pt; font-style:italic; margin:8px 0 14px 0;">
+                Si rammenta che non &egrave; iscritto al fondo chi abbia chiesto il riscatto della posizione maturata alla scadenza del precedente contratto.
+            </div>
+
+            <div class="firma-split" style="margin-bottom:18px;">
+                <div style="font-style:italic;">
+                    <span id="out_luogo_firma2a"></span>, <span id="out_data_firma2a"></span>
+                </div>
+                <div class="firma-destra">
+                    <em>Firma del dichiarante</em>
+                </div>
+            </div>
+<br><hr>
+            <div class="sezione-titolo-center">DICHIARA</div>
+
+            <div class="riga"><span class="casella-check" id="chk_incompat_no"></span><span id="txt_incompat_no"> di non trovarsi in nessuna delle situazioni di incompatibilit&agrave; richiamate dall&rsquo;art. 508 del D. L.vo n. 297/1994 o dall&rsquo;art. 53 del D.L.vo n. 165/2001</span></div>
+            <div class="riga mt-1"><span class="casella-check" id="chk_incompat_si"></span><span id="txt_incompat_si"> di trovarsi in una delle suddette situazioni di incompatibilit&agrave; e di optare per il nuovo rapporto di lavoro</span></div>
+
+            <div class="firma-split" style="margin-bottom:18px;">
+                <div style="font-style:italic;">
+                    <span id="out_luogo_firma2b"></span>, <span id="out_data_firma2b"></span>
+                </div>
+                <div class="firma-destra">
+                    <em>Firma del dichiarante</em>
+                </div>
+            </div>
+<br><hr>
+            <div class="sezione-titolo-center">AUTORIZZA</div>
+
+            <div class="riga" style="font-size:9.5pt;">
+                ai sensi del Decreto Legislativo n. 196 del 30/06/2003, l&rsquo;amministrazione scolastica ad utilizzare i dati personali dichiarati solo per fini istituzionali e necessari per la gestione giuridica ed economica del rapporto di lavoro.
+            </div>
+
+            <div class="firma-split" style="margin-top:26px;">
+                <div style="font-style:italic;">
+                    <span id="out_luogo_firma2c"></span>, <span id="out_data_firma2c"></span>
+                </div>
+                <div class="firma-destra">
+                    <em>Firma del dichiarante</em>
+                </div>
+            </div>
+
+            <div class="footer-doc" id="footer_p2"></div>
+        </div>
+    </div>
+
+    <!-- PAGINA 3 -->
+    <div>
+        <div class="page-label"><span class="badge-pagina">Pagina 3 &ndash; Dichiarazione di Autocertificazione</span></div>
+        <div class="a4-page" id="page3">
+            <div class="doc-titolo-principale">
+                <div class="titolo">Dichiarazione di Autocertificazione</div>
+                <div class="sottotitolo">(ai sensi dell&rsquo;art. 47 del D.P.R. 28 dicembre 2000, n. 445 e s.m.i.)</div>
+            </div>
+
+            <div class="riga mt-2">
+                <span id="out_sottoscritto_p3">Il sottoscritto</span> <span class="campo" id="out_cognome_nome_p3"></span>
+                <span id="out_nato_p3"> nato</span> il <span class="campo" id="out_nascita_p3"></span>
+                a <span class="campo" id="out_luogo_nascita_p3"></span> prov. di (<span class="campo" id="out_prov_nascita_p3"></span>) e residente a <span class="campo" id="out_citta_res_p3"></span> (<span class="campo" id="out_prov_res_p3"></span>)
+            
+            in <span class="campo" id="out_indirizzo_p3"></span>.
+            </div>
+            <div class="riga">
+            Contatti (telefono - indirizzo email - altro): <span class="campo" id="out_contatti_p3"></span></div>
+
+            <div style="font-size:9.5pt; margin:8px 0;">
+                consapevole che chiunque rilascia dichiarazioni mendaci &egrave; punito ai sensi del codice penale e delle leggi speciali in materia, ai sensi e per gli effetti dell&rsquo;art. 46 D.P.R. n. 445/2000
+            </div>
+
+            <div class="sezione-titolo-center">DICHIARA</div>
+
+            <div style="font-size:9.5pt;">di trovarsi nella seguente posizione e/o essere in possesso dei seguenti titoli:</div>
+
+            <div style="border:1px solid #888; padding:10px; margin:10px 0; min-height:120px; font-size:10pt; line-height:1.7;" id="out_autocerti"></div>
+
+            <div style="font-size:8.5pt; margin:10px 0; font-style:italic; border-top:0px solid #ccc; padding-top:6px;">
+                La firma non necessita di autenticazione n&eacute; di essere apposta in presenza dell&rsquo;Ente richiedente. In caso di invio per posta, fax o tramite incaricato, allegare copia di un documento d&rsquo;identit&agrave; valido. I dati personali saranno trattati esclusivamente per le finalit&agrave; connesse al procedimento, in conformit&agrave; al Regolamento (UE) 2016/679 (GDPR) e al D.Lgs. 101/2018.
+            </div>
+
+            <!-- Firma: luogo+data a sinistra, firma a destra -->
+            <div class="firma-split">
+                <div style="font-style:italic;">
+                    <span id="out_luogo_firma3"></span>, <span id="out_data_firma3"></span>
+                </div>
+                <div class="firma-destra">
+                    <em>Firma del dichiarante</em>
+                </div>
+            </div>
+
+            <div class="footer-doc" id="footer_p3"></div>
+        </div>
+    </div>
+
+</div><!-- fine preview-area -->
+</div><!-- fine row -->
+</div><!-- fine container -->
+
 <script>
-    /* ----------------------------------------------------------------
-       ISTITUTO — sincronizza i campi della testata e del DS
-    ---------------------------------------------------------------- */
-    function syncIstituto() {
-        const r1 = document.getElementById('in_scuola_r1').value.trim();
-        const r2 = document.getElementById('in_scuola_r2').value.trim();
-        const r3 = document.getElementById('in_scuola_r3').value.trim();
-        const luogo = document.getElementById('in_luogo').value.trim();
-        const dsNome = document.getElementById('in_ds_nome').value.trim();
-        const firmaTipo = document.getElementById('in_firma_tipo').value;
+/* ================================================================
+   CONFIGURAZIONE
+   ================================================================ */
+const CONFIG = {
+    nome_scuola:        "3° ISTITUTO COMPRENSIVO CAPUANA-DE AMICIS DI AVOLA",
+    sottotitolo_scuola: "Scuola dell'Infanzia, Primaria e Secondaria di primo grado ad indirizzo musicale | V.le C. Santuccio, Avola (SR) – Tel. 0931.318330",
+    anno_scolastico: "2025/2026",
+    luogo_default: "Avola",
+    crediti: "Mod. «Assunzione in servizio e dichiarazioni foglio notizie» \u25cf credit: S. Basile \u25cf Licenza: CC (BY-NC-SA) \u25cf www.superscuola.com",
+};
+/* ================================================================ */
 
-        // Riga 1 — grassetto
-        document.getElementById('cfg_scuola_r1').textContent = r1;
+let famiglia = [];
 
-        // Riga 2
-        document.getElementById('cfg_scuola_r2').textContent = r2;
+function addFamilyMember(data){
+    const idx = famiglia.length;
+    const m = data || { cognome:'', nome:'', luogo_data:'', parentela:'' };
+    famiglia.push(m);
+    const container = document.getElementById('famiglia-inputs');
+    const div = document.createElement('div');
+    div.className = 'row g-1 mb-1 p-1';
+    div.style.cssText = 'background:#eef3fb; border-radius:4px;';
+    div.innerHTML = `
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <small class="fw-bold text-primary">Componente ${idx+1}</small>
+            <button class="btn btn-outline-danger btn-sm" style="padding:1px 6px;font-size:0.7rem" onclick="removeFamilyMember(${idx})">&#10005;</button>
+        </div>
+        <div class="col-6"><input type="text" class="form-control form-control-sm" placeholder="Cognome" value="${esc(m.cognome)}" oninput="updateFam(${idx},'cognome',this.value)"></div>
+        <div class="col-6"><input type="text" class="form-control form-control-sm" placeholder="Nome" value="${esc(m.nome)}" oninput="updateFam(${idx},'nome',this.value)"></div>
+        <div class="col-7"><input type="text" class="form-control form-control-sm" placeholder="Luogo, Data nascita" value="${esc(m.luogo_data)}" oninput="updateFam(${idx},'luogo_data',this.value)"></div>
+        <div class="col-5"><input type="text" class="form-control form-control-sm" placeholder="Parentela" value="${esc(m.parentela)}" oninput="updateFam(${idx},'parentela',this.value)"></div>
+    `;
+    container.appendChild(div);
+    sync();
+}
 
-        // Riga 3 — visibile solo se compilata
-        const r3el = document.getElementById('cfg_scuola_r3');
-        if (r3) {
-            r3el.textContent = r3;
-            r3el.style.display = '';
-        } else {
-            r3el.style.display = 'none';
-        }
+function esc(s){ return (s||'').replace(/"/g,'&quot;'); }
 
-        // Luogo data
-        document.getElementById('out_luogo').textContent = luogo || 'Avola';
-
-        // Nome DS
-        document.getElementById('cfg_ds_nome').innerHTML = dsNome
-            ? `<b>${dsNome}</b>`
-            : '';
-
-        // Blocco firma DS
-        const firmaBlock = document.getElementById('cfg_ds_firma_block');
-        if (firmaTipo === 'sostitutiva') {
-            firmaBlock.innerHTML =
-                '<div class="firma-sostitutiva">Firma autografa sostituita a mezzo stampa<br>' +
-                'ai sensi dell\'art. 3 comma 2 D.lgs. n. 39/93</div>';
-        } else {
-            // autografa o digitale → linea per firma a penna
-            const etichetta = firmaTipo === 'digitale' ? 'Firma digitale' : 'Firma autografa';
-            firmaBlock.innerHTML =
-                '<div class="firma-line">' + etichetta + '</div>';
-        }
-
-        // Salvataggio localStorage istituto
-        const istitutoIds = ['in_scuola_r1','in_scuola_r2','in_scuola_r3','in_luogo','in_ds_nome','in_firma_tipo'];
-        istitutoIds.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
-
-        // Badge "✓ salvato"
-        const badge = document.getElementById('badge_saved');
-        badge.classList.add('show');
-        setTimeout(() => badge.classList.remove('show'), 1800);
+function removeFamilyMember(idx){
+    famiglia.splice(idx,1);
+    rebuildFamilyUI();
+    sync();
+}
+function updateFam(idx,field,val){
+    if(famiglia[idx]) famiglia[idx][field]=val;
+    renderFamTable();
+    persistData();
+}
+function rebuildFamilyUI(){
+    const old=[...famiglia]; famiglia=[]; document.getElementById('famiglia-inputs').innerHTML='';
+    old.forEach(m=>addFamilyMember(m));
+}
+function renderFamTable(){
+    const tbody=document.getElementById('out_famiglia_body');
+    let html='';
+    // Mostra sempre tutte le righe necessarie, ma di default parte con 2 righe se famiglia vuota
+    const rows = Math.max(2, famiglia.length);
+    for(let i=0;i<rows;i++){
+        const m=famiglia[i]||{};
+        html+=`<tr><td>${i+1}</td><td>${m.cognome||'&nbsp;'}</td><td>${m.nome||'&nbsp;'}</td><td>${m.luogo_data||'&nbsp;'}</td><td>${m.parentela||'&nbsp;'}</td></tr>`;
     }
+    tbody.innerHTML=html;
+}
 
-    /* ----------------------------------------------------------------
-       FASCIA "Altro (personalizza)" — mostra/nasconde il campo testo
-    ---------------------------------------------------------------- */
-    function toggleAltroFascia() {
-        const isAltro = document.getElementById('in_grad').value === '__altro__';
-        document.getElementById('wrap_grad_altro').style.display = isAltro ? '' : 'none';
-        if (isAltro) document.getElementById('in_grad_altro').focus();
-    }
+function fmtDate(s){
+    if(!s) return '________';
+    const d=s.split('-');
+    return `${d[2]}/${d[1]}/${d[0]}`;
+}
+function campo(id){ const el=document.getElementById(id); return el?el.value:''; }
+function setTxt(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function setHTML(id,v){ const el=document.getElementById(id); if(el) el.innerHTML=v; }
+function isChk(id){ const el=document.getElementById(id); return el?el.checked:false; }
 
-    /* ----------------------------------------------------------------
-       DOCUMENTO — sincronizza i campi del documento
-    ---------------------------------------------------------------- */
-    function fmtDate(s) {
-        if (!s) return "________";
-        const d = s.split('-');
-        return `${d[2]}/${d[1]}/${d[0]}`;
-    }
+function setCheck(id,on){
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.classList.toggle('checked',!!on);
+}
+function setBold(id,on){
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.style.fontWeight=on?'bold':'normal';
+}
 
-    function sync() {
-        const s       = document.getElementById('in_sesso').value;
-        const n       = document.getElementById('in_nome').value.toUpperCase();
-        const d       = document.getElementById('in_data_doc').value;
-        const d_conv  = document.getElementById('in_data_conv').value;
-        const d_acc   = document.getElementById('in_data_acc').value;
-        const tipoPers = document.getElementById('in_tipo_pers').value;
+function toggleAltro(selectId, inputId) {
+    const sel = document.getElementById(selectId);
+    const inp = document.getElementById(inputId);
+    if (!sel || !inp) return;
+    inp.style.display = sel.value === 'ALTRO' ? 'block' : 'none';
+    if (sel.value !== 'ALTRO') inp.value = '';
+}
 
-        document.getElementById('out_appello').innerText     = s === 'M' ? 'Al Sig.' : 'Alla Sig.ra';
-        document.getElementById('out_del_sig').innerText     = s === 'M' ? 'del sig.' : 'della sig.ra';
-        document.getElementById('out_art_il').innerText      = s === 'M' ? 'Il' : 'La';
-        document.getElementById('out_sigra_main').innerText  = s === 'M' ? 'sig.' : 'sig.ra';
-        document.getElementById('out_nato_a').innerText      = s === 'M' ? 'nato' : 'nata';
-        document.getElementById('out_inserita_a').innerText  = s === 'M' ? 'inserito' : 'inserita';
-        document.getElementById('out_destinatario').innerText= s === 'M' ? 'destinatario' : 'destinataria';
+function sync(){
+    /* INTESTAZIONE */
+    const nomeScuola  = campo('in_nome_scuola')        || CONFIG.nome_scuola;
+    const sottoScuola = campo('in_sottotitolo_scuola') || CONFIG.sottotitolo_scuola;
+    setTxt('out_nome_scuola', nomeScuola);
+    setTxt('out_sottotitolo_scuola', sottoScuola);
+    setTxt('out_as', campo('in_anno_scolastico') || CONFIG.anno_scolastico);
 
-        if (tipoPers.includes("ATA")) {
-            document.getElementById('out_label_qualita').innerText   = "in qualità di";
-            document.getElementById('out_qualifica_ordine').innerText = tipoPers;
-        } else {
-            document.getElementById('out_label_qualita').innerText   = "per l'ordine di";
-            document.getElementById('out_qualifica_ordine').innerText = document.getElementById('in_ordine').value;
-        }
+    /* CREDITI footer */
+    ['footer_p1','footer_p2','footer_p3'].forEach(id=>setTxt(id,CONFIG.crediti));
 
-        document.getElementById('out_nome_top').innerText  = n;
-        document.getElementById('out_nome_acc').innerText  = n;
-        document.getElementById('out_nome_main').innerText = n;
-        document.getElementById('out_data_top').innerText  = fmtDate(d);
+    /* GENERE */
+    const maschile    = campo('in_genere') !== 'F';
+    const sottoscr    = maschile ? 'Il sottoscritto' : 'La sottoscritta';
+    const natoP1      = maschile ? 'nato' : 'nata';
+    const natoP3      = maschile ? ' nato' : ' nata';
+    setTxt('out_sottoscritto_p1', sottoscr);
+    setTxt('out_nato_p1',         natoP1);
+    setTxt('out_sottoscritto_p2', sottoscr);
+    setTxt('out_sottoscritto_p3', sottoscr);
+    setTxt('out_nato_p3',         natoP3);
 
-        document.getElementById('out_data_conv').innerText = d_conv ? fmtDate(d_conv) : fmtDate(d);
-        document.getElementById('out_data_acc').innerText  = d_acc  ? fmtDate(d_acc)  : fmtDate(d);
+    /* PAG 1 – anagrafica */
+    const cognome     = campo('in_cognome');
+    const nome        = campo('in_nome');
+    const cognomeNome = (cognome+' '+nome).trim();
 
-        document.getElementById('out_nascita').innerText   = fmtDate(document.getElementById('in_nascita').value);
-        document.getElementById('out_prot_gen').innerText  = document.getElementById('in_prot_gen').value;
-        document.getElementById('out_prot_acc').innerText  = document.getElementById('in_prot_acc').value;
-        document.getElementById('out_prot_conv').innerText = document.getElementById('in_prot_conv').value;
-        document.getElementById('out_tipo_pers_v').innerText = tipoPers;
-        document.getElementById('out_classe').innerText    = document.getElementById('in_classe').value.toUpperCase();
-        const gradVal = document.getElementById('in_grad').value;
-        document.getElementById('out_grad').innerText =
-            gradVal === '__altro__'
-                ? (document.getElementById('in_grad_altro').value || '________')
-                : gradVal;
-        document.getElementById('out_pos').innerText       = document.getElementById('in_pos').value;
-        document.getElementById('out_punti').innerText     = document.getElementById('in_punti').value;
-        document.getElementById('out_ore').innerText       = document.getElementById('in_ore').value;
-        document.getElementById('out_inizio').innerText    = fmtDate(document.getElementById('in_inizio').value);
-        document.getElementById('out_fine').innerText      = fmtDate(document.getElementById('in_fine').value);
-        document.getElementById('out_note').innerText      = document.getElementById('in_note').value;
-        document.getElementById('out_resp').innerText      = document.getElementById('in_resp').value;
+    setTxt('out_cognome',       cognome);
+    setTxt('out_nome_p1',       nome);
+    setTxt('out_nascita',       fmtDate(campo('in_nascita')));
+    setTxt('out_luogo_nascita', campo('in_luogo_nascita'));
+    setTxt('out_prov_nascita',  campo('in_prov_nascita').toUpperCase());
+    setTxt('out_indirizzo',
+        campo('in_indirizzo') + ' ' + campo('in_citta_res') +
+        (campo('in_prov_res') ? ' (' + campo('in_prov_res').toUpperCase() + ')' : ''));
+    setTxt('out_contatti',      campo('in_contatti'));
+    setTxt('out_cf',            campo('in_cf').toUpperCase());
+    setTxt('out_partita',       campo('in_partita') || '---');
 
-        const i = new Date(document.getElementById('in_inizio').value);
-        const f = new Date(document.getElementById('in_fine').value);
-        if (i && f && f >= i) {
-            const diff = Math.ceil((f - i) / 86400000) + 1;
-            document.getElementById('out_giorni').innerText = `La durata totale del contratto è di ${diff} giorni.`;
-        } else {
-            document.getElementById('out_giorni').innerText = "";
-        }
+    /* Allegati riquadro – check + grassetto */
+    const allMap = [
+        ['in_all_cedolino',  'chk_all_cedolino',  'txt_all_cedolino'],
+        ['in_all_documento', 'chk_all_documento', 'txt_all_documento'],
+        ['in_all_cf',        'chk_all_cf',        'txt_all_cf'],
+        ['in_all_possesso',  'chk_all_possesso',  'txt_all_possesso'],
+    ];
+    allMap.forEach(([inp, chk, txt]) => {
+        const checked = isChk(inp);
+        setCheck(chk, checked);
+        const el = document.getElementById(txt);
+        if (el) el.style.fontWeight = checked ? 'bold' : 'normal';
+    });
 
-        // salva in localStorage tutti i campi documento
-        document.querySelectorAll('input:not([id^="in_scuola"]):not([id="in_luogo"]):not([id="in_ds_nome"]), select:not([id="in_firma_tipo"]), textarea')
-            .forEach(el => localStorage.setItem(el.id, el.value));
-    }
-
-    /* ----------------------------------------------------------------
-       RESET — pulisce solo i campi del personale (NON le impostazioni)
-    ---------------------------------------------------------------- */
-    function resetForm() {
-        if (confirm("Vuoi pulire i dati del personale individuato?\n(Le impostazioni dell'istituto rimangono invariate.)")) {
-            const clear = ['in_data_doc','in_data_conv','in_data_acc','in_nome','in_nascita',
-                           'in_pos','in_punti','in_ore','in_inizio','in_fine','in_note',
-                           'in_prot_gen','in_prot_acc','in_prot_conv','in_classe','in_grad_altro'];
-            clear.forEach(id => {
-                document.getElementById(id).value = "";
-                localStorage.removeItem(id);
-            });
-            const selects = ['in_tipo_pers','in_ordine','in_grad'];
-            selects.forEach(id => {
-                document.getElementById(id).selectedIndex = 0;
-                localStorage.setItem(id, document.getElementById(id).value);
-            });
-            sync();
-        }
-    }
-
-    /* ----------------------------------------------------------------
-       INIT — carica localStorage e aggiorna tutto
-    ---------------------------------------------------------------- */
-    window.onload = () => {
-        // Campi documento + istituto: localStorage ha priorità, altrimenti resta il value di default HTML
-        document.querySelectorAll('input, select, textarea').forEach(el => {
-            const v = localStorage.getItem(el.id);
-            if (v !== null) el.value = v;
-        });
-
-        // Apri/chiudi panel istituto: se r1 è già compilato → chiudi
-        const panel = document.getElementById('panel_istituto');
-        const r1val = localStorage.getItem('in_scuola_r1') || '';
-        if (r1val.trim()) {
-            panel.removeAttribute('open');  // già configurato → chiuso
-        } else {
-            panel.setAttribute('open', ''); // prima volta → aperto
-        }
-
-        toggleAltroFascia();
-        syncIstituto();
-        sync();
+    /* Tipo dichiarazione – mostra solo la dicitura scelta, in grassetto */
+    const tipo = campo('in_tipo_dich');
+    const tipoLabels = {
+        SUPPLENZA_LUNGA: 'Supplenza Lunga',
+        PASS_RUOLO: 'Passaggio di Ruolo',
+        TRASFERIMENTO: 'Trasferimento',
+        ASS_PROVVISORIA: 'Assegnazione Provvisoria',
+        UTILIZZAZIONE: 'Utilizzazione',
+        ALTRO: campo('in_tipo_dich_altro') || '___________'
     };
+    const labelEl = document.getElementById('out_tipo_dich_label');
+    if (labelEl) labelEl.textContent = tipoLabels[tipo] || tipo;
 
-    /* ----------------------------------------------------------------
-       EXPORT PDF
-    ---------------------------------------------------------------- */
-    function exportPDF() {
-        const element = document.getElementById('doc-pdf');
-        const nomeSoggetto = document.getElementById('in_nome').value.replace(/\s+/g, '-').toUpperCase() || "SCONOSCIUTO";
-        const dataDocRaw   = document.getElementById('in_data_doc').value;
-        const dataFormattata = dataDocRaw ? dataDocRaw.split('-').reverse().join('-') : "00-00-0000";
-        const fileName = `individuazione_${nomeSoggetto}_${dataFormattata}.pdf`;
+    /* Qualifica – gestione ALTRO */
+    const qualificaRaw = campo('in_qualifica');
+    const qualificaVal = qualificaRaw === 'ALTRO'
+        ? (campo('in_qualifica_altro') || '___________')
+        : qualificaRaw;
+    setTxt('out_qualifica',       qualificaVal);
+    setTxt('out_ordine',          campo('in_ordine'));
+    setTxt('out_data_assunzione', fmtDate(campo('in_data_assunzione')));
+    setTxt('out_ore',             campo('in_ore') || '---');
+    setTxt('out_fine',            fmtDate(campo('in_fine')));
+    setTxt('out_classe',          campo('in_classe') || '---');
+    setTxt('out_ore_extra',       campo('in_ore_extra') || '---');
+    setTxt('out_sede_extra',      campo('in_sede_extra') || '---');
+    setTxt('out_titolo_studio',   campo('in_titolo_studio') || '---');
+    const dr = fmtDate(campo('in_data_ruolo'));
+    setTxt('out_data_ruolo',      dr === '________' ? '----' : dr);
+    setTxt('out_sede_titolarita', campo('in_sede_titolarita') || '----');
+    setTxt('out_ultima_sede',     campo('in_ultima_sede') || '---');
+    setTxt('out_comune_citt',     campo('in_comune_citt') || '___________');
+    setTxt('out_stato_civile',    campo('in_stato_civile'));
 
-        html2pdf().from(element).set({
-            margin: 0,
-            filename: fileName,
-            image:     { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, logging: false, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).save();
+    /* Firma pag 1 */
+    setTxt('out_luogo_firma1', campo('in_luogo_firma') || CONFIG.luogo_default);
+    setTxt('out_data_firma1',  fmtDate(campo('in_data_firma')));
+
+    renderFamTable();
+
+    /* PAG 2 – Fondo Espero */
+    setTxt('out_cognome_nome_p2', cognomeNome);
+    const espero = campo('in_espero');
+    const eIsc = espero==='ISCRITTO', eRis = espero==='RISCATTO', eNo = espero==='NON_ISCRITTO';
+    setCheck('chk_espero_iscritto', eIsc); setBold('txt_espero_iscritto', eIsc);
+    setCheck('chk_espero_riscatto', eRis); setBold('txt_espero_riscatto', eRis);
+    setCheck('chk_espero_no',       eNo);  setBold('txt_espero_no',       eNo);
+
+    const incompat = campo('in_incompat');
+    const iNo = incompat==='NESSUNA', iSi = incompat==='OPTA';
+    setCheck('chk_incompat_no', iNo); setBold('txt_incompat_no', iNo);
+    setCheck('chk_incompat_si', iSi); setBold('txt_incompat_si', iSi);
+
+    const lf2 = campo('in_luogo_firma') || CONFIG.luogo_default;
+    const df2 = fmtDate(campo('in_data_firma'));
+    ['2a','2b','2c'].forEach(s=>{ setTxt('out_luogo_firma'+s,lf2); setTxt('out_data_firma'+s,df2); });
+
+    /* PAG 3 – Autocertificazione */
+    setTxt('out_cognome_nome_p3',  cognomeNome);
+    setTxt('out_nascita_p3',       fmtDate(campo('in_nascita')));
+    setTxt('out_luogo_nascita_p3', campo('in_luogo_nascita'));
+    setTxt('out_prov_nascita_p3',  campo('in_prov_nascita').toUpperCase());
+    setTxt('out_citta_res_p3',     campo('in_citta_res'));
+    setTxt('out_prov_res_p3',      campo('in_prov_res').toUpperCase());
+    setTxt('out_indirizzo_p3',     campo('in_indirizzo'));
+    setTxt('out_contatti_p3',      campo('in_contatti'));
+
+    const autoText = campo('in_autocerti');
+    const autoClean = (autoText || '').replace(/^(<br\s*\/?>|\s)*/i,'').replace(/(<br\s*\/?>|\s)*$/i,'');
+    setHTML('out_autocerti', autoClean
+        ? autoText
+        : '<em style="color:#aaa;">Il testo verrà visualizzato qui...</em>');
+
+    const lf3 = campo('in_luogo_firma') || CONFIG.luogo_default;
+    setTxt('out_luogo_firma3', lf3);
+    setTxt('out_data_firma3',  fmtDate(campo('in_data_firma')));
+
+    persistData();
+}
+
+function persistData(){
+    localStorage.setItem('foglio_notizie_data', JSON.stringify(gatherData()));
+    const ind=document.getElementById('save-indicator');
+    ind.textContent='✓ Salvato in memoria browser';
+    ind.style.opacity='1';
+    setTimeout(()=>{ ind.style.opacity='0'; }, 2000);
+}
+
+function gatherData(){
+    const data={};
+    document.querySelectorAll('input[id^="in_"], select[id^="in_"], textarea[id^="in_"]').forEach(el=>{
+        data[el.id] = el.type==='checkbox' ? el.checked : el.value;
+    });
+    data['_famiglia']=famiglia;
+    return data;
+}
+
+function applyData(data){
+    Object.keys(data).forEach(key=>{
+        if(key==='_famiglia') return;
+        const el=document.getElementById(key);
+        if(!el) return;
+        if(el.type==='checkbox') el.checked=!!data[key];
+        else el.value=data[key];
+    });
+    /* Ripristina editor contenteditable */
+    const editorEl = document.getElementById('in_autocerti_editor');
+    if (editorEl) editorEl.innerHTML = data['in_autocerti'] || '';
+    famiglia=[];
+    document.getElementById('famiglia-inputs').innerHTML='';
+    if(data['_famiglia']&&Array.isArray(data['_famiglia'])){
+        data['_famiglia'].forEach(m=>addFamilyMember(m));
     }
+    toggleAltro('in_tipo_dich','in_tipo_dich_altro');
+    toggleAltro('in_qualifica','in_qualifica_altro');
+    sync();
+}
+
+function toggleBoldAutocerti() {
+    document.getElementById('in_autocerti_editor').focus();
+    document.execCommand('bold', false, null);
+    syncEditorToTextarea();
+    sync();
+}
+
+function syncEditorToTextarea() {
+    const editor = document.getElementById('in_autocerti_editor');
+    const ta     = document.getElementById('in_autocerti');
+    if (editor && ta) ta.value = editor.innerHTML;
+}
+
+function stampaPDF(){
+    window.print();
+}
+
+function saveJSON(){
+    const data=gatherData();
+    const c=(campo('in_cognome')||'docente').toLowerCase().replace(/\s+/g,'_');
+    const n=(campo('in_nome')||'').toLowerCase().replace(/\s+/g,'_');
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`foglio_notizie_${c}_${n}.json`});
+    a.click(); URL.revokeObjectURL(a.href);
+}
+function loadJSON(event){
+    const file=event.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+        try{ applyData(JSON.parse(e.target.result)); alert('✓ Dati caricati correttamente!'); }
+        catch(err){ alert('Errore nel file JSON.'); }
+    };
+    reader.readAsText(file);
+    event.target.value='';
+}
+
+function resetForm(){
+    if(!confirm('Vuoi cancellare tutti i dati inseriti?')) return;
+    document.querySelectorAll('input[id^="in_"], select[id^="in_"], textarea[id^="in_"]').forEach(el=>{
+        if(el.type==='checkbox') el.checked=false;
+        else if(el.tagName==='SELECT') el.selectedIndex=0;
+        else el.value='';
+    });
+    document.getElementById('in_nome_scuola').value=CONFIG.nome_scuola;
+    document.getElementById('in_sottotitolo_scuola').value=CONFIG.sottotitolo_scuola;
+    document.getElementById('in_anno_scolastico').value=CONFIG.anno_scolastico;
+    document.getElementById('in_luogo_firma').value=CONFIG.luogo_default;
+    famiglia=[];
+    document.getElementById('famiglia-inputs').innerHTML='';
+    const editorEl = document.getElementById('in_autocerti_editor');
+    if (editorEl) editorEl.innerHTML = '';
+    localStorage.removeItem('foglio_notizie_data');
+    sync();
+}
+
+function showSection(id,tab){
+    document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    tab.classList.add('active');
+}
+
+window.onload=()=>{
+    document.getElementById('in_nome_scuola').value=CONFIG.nome_scuola;
+    document.getElementById('in_sottotitolo_scuola').value=CONFIG.sottotitolo_scuola;
+    document.getElementById('in_anno_scolastico').value=CONFIG.anno_scolastico;
+    document.getElementById('in_luogo_firma').value=CONFIG.luogo_default;
+
+    const saved=localStorage.getItem('foglio_notizie_data');
+    if(saved){ try{ applyData(JSON.parse(saved)); }catch(e){ sync(); } }
+    else{ sync(); }
+
+    /* Editor autocertificazione – eventi */
+    const editor = document.getElementById('in_autocerti_editor');
+    if (editor) {
+        editor.addEventListener('input', () => { syncEditorToTextarea(); sync(); });
+        /* Ctrl+B → grassetto */
+        editor.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                document.execCommand('bold', false, null);
+                syncEditorToTextarea();
+                sync();
+            }
+            /* Enter → <br> semplice invece di <div> */
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.execCommand('insertLineBreak');
+            }
+        });
+        /* Incolla: testo semplice per non sporcare l'HTML */
+        editor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+    }
+};
 </script>
 </body>
 </html>
