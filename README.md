@@ -7,6 +7,8 @@
 
 **Generatore di moduli per la presa di servizio del personale scolastico**
 
+> **Utilizzo e dimostrativo:** [superscuola.com/assunzione](https://superscuola.com/assunzione)
+
 > Autore: **Sebastiano BASILE** Avola (SR) · [superscuola.com](https://superscuola.com)  
 > Licenza: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.it)  
 > Progetto: [GitHub – sebastianobasile](https://github.com/sebastianobasile?tab=repositories)
